@@ -1,0 +1,5 @@
+telethon
+tqdm
+python-dotenv
+rich
+cryptg
