@@ -2,7 +2,7 @@
 
 A reliable Telegram channel media archiver built for students and learners who study from Telegram channels but struggle to save, organize, and watch course content offline.
 
-In India and elsewhere, many students rely on Telegram for courses, notes, and video lectures. Scrolling through long channel histories, dealing with slow playback, and losing access when channels change is frustrating. This tool downloads **images, audio, and video** from channels in order, with **resume support**, so you can study offline with VLC or any player.
+In India and elsewhere, many students rely on Telegram for courses, notes, and video lectures. Scrolling through long channel histories, dealing with slow playback, and losing access when channels change is frustrating. This tool downloads **images, audio, video, and documents** (PDF, Word, Excel, PowerPoint, ZIP, text files, and more) from channels in order, with **resume support**, so you can study offline with VLC or any reader.
 
 **Best case throughput:** about **10–15 MB/s** (depends on your ISP, Telegram CDN, Windows Defender, SSD, and tuning). Typical speeds are lower; see [Speed tuning](#speed-tuning) below.
 
@@ -17,6 +17,7 @@ Live terminal progress while downloading a channel (multipart + multi-file concu
 ## Features
 
 - Download from public channels, `t.me` links, and invite links
+- Media types: images, audio, video, **PDF**, Office files, ZIP/archives, text/CSV, and more
 - Chronological numbering: `0000000001 - caption.mp4`
 - Caption-based filenames (ASCII-safe, Windows path limits respected)
 - Resume: skips already completed files via `manifest.json`
@@ -24,7 +25,7 @@ Live terminal progress while downloading a channel (multipart + multi-file concu
 - Retries, FloodWait handling, integrity checks
 - Live progress (Rich multi-line dashboard when installed)
 
-**Not downloaded:** stickers, random documents, webpage previews (links only).
+**Not downloaded:** stickers, webpage previews (link-only posts).
 
 ---
 

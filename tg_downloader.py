@@ -108,17 +108,84 @@ def detect_extension(message: Any, fallback_name: str) -> str:
         return ".mp3"
     if mime.startswith("image/"):
         return ".jpg"
+    if mime == "application/pdf":
+        return ".pdf"
+    if "wordprocessingml" in mime:
+        return ".docx"
+    if "spreadsheetml" in mime:
+        return ".xlsx"
+    if "presentationml" in mime:
+        return ".pptx"
+    if mime == "application/msword":
+        return ".doc"
+    if mime == "application/zip":
+        return ".zip"
+    if mime.startswith("text/"):
+        return ".txt"
     return ".bin"
 
 
+# Extensions for course materials (PDF, Office, archives, notes).
+DOCUMENT_EXTENSIONS = {
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".ppt",
+    ".pptx",
+    ".xls",
+    ".xlsx",
+    ".txt",
+    ".csv",
+    ".md",
+    ".zip",
+    ".rar",
+    ".7z",
+    ".epub",
+    ".json",
+    ".xml",
+    ".html",
+    ".htm",
+    ".rtf",
+    ".odt",
+    ".ods",
+    ".odp",
+}
+
+DOCUMENT_MIME_PREFIXES = (
+    "application/pdf",
+    "application/msword",
+    "application/vnd.",
+    "application/zip",
+    "application/x-zip",
+    "application/x-rar",
+    "application/x-7z",
+    "application/json",
+    "application/rtf",
+    "text/",
+)
+
+
+def _document_filename(message: Any) -> str:
+    file_obj = getattr(message, "file", None)
+    return (getattr(file_obj, "name", None) or "").lower()
+
+
+def _is_sticker_or_animation_only(message: Any, mime: str) -> bool:
+    if getattr(message, "sticker", False):
+        return True
+    if mime in {"application/x-tgsticker", "application/x-tgs-sticker"}:
+        return True
+    if getattr(message, "gif", False) and mime.startswith("video/"):
+        return True
+    return False
+
+
 def is_supported_media(message: Any) -> bool:
-    # Allow photos and only audio/video/image documents. Skip stickers/other docs.
+    # Photos, audio, video, and documents (PDF, Office, archives, text). Skip stickers/webpages.
     media = getattr(message, "media", None)
     if media is None:
         return False
     if media.__class__.__name__ == "MessageMediaWebPage":
-        return False
-    if getattr(message, "sticker", False):
         return False
     if getattr(message, "photo", None) is not None:
         return True
@@ -126,7 +193,20 @@ def is_supported_media(message: Any) -> bool:
     if doc is None:
         return False
     mime = (getattr(doc, "mime_type", "") or "").lower()
-    return mime.startswith("image/") or mime.startswith("audio/") or mime.startswith("video/")
+    if _is_sticker_or_animation_only(message, mime):
+        return False
+    if mime.startswith("image/") or mime.startswith("audio/") or mime.startswith("video/"):
+        return True
+    if any(mime.startswith(prefix) for prefix in DOCUMENT_MIME_PREFIXES):
+        return True
+    filename = _document_filename(message)
+    ext = Path(filename).suffix
+    if ext in DOCUMENT_EXTENSIONS:
+        return True
+    # Generic binary uploads often use octet-stream but keep the real extension in the filename.
+    if mime == "application/octet-stream" and ext in DOCUMENT_EXTENSIONS:
+        return True
+    return False
 
 
 def quick_header_valid(path: Path) -> bool:
