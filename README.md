@@ -6,6 +6,12 @@ In India and elsewhere, many students rely on Telegram for courses, notes, and v
 
 **Best case throughput:** about **10–15 MB/s** (depends on your ISP, Telegram CDN, Windows Defender, SSD, and tuning). Typical speeds are lower; see [Speed tuning](#speed-tuning) below.
 
+## Demo
+
+Live terminal progress while downloading a channel (multipart + multi-file concurrency):
+
+![Telegram bulk downloader — live terminal progress](ASSETS/ScreenRecording2026-05-28204134-ezgif.com-video-to-gif-converter.gif)
+
 ---
 
 ## Features
@@ -220,6 +226,7 @@ tg-downloader-telethon/
   tg_downloader.py      # Main script
   requirements.txt
   .env.example
+  ASSETS/               # README demo GIF
   system.md             # Product / architecture spec
   changes.md            # Performance notes
   downloads/            # Default output (created at runtime)
