@@ -96,9 +96,10 @@ def build_filename(index: int, caption: str, fallback_base: str, ext: str, max_l
 
 
 def detect_extension(message: Any, fallback_name: str) -> str:
-    original_ext = Path(fallback_name).suffix
-    if original_ext:
-        return original_ext
+    if fallback_name:
+        ext = _extension_from_filename(fallback_name)
+        if ext:
+            return ext
 
     media = getattr(message, "media", None)
     mime = getattr(getattr(media, "document", None), "mime_type", "") or ""
@@ -118,14 +119,70 @@ def detect_extension(message: Any, fallback_name: str) -> str:
         return ".pptx"
     if mime == "application/msword":
         return ".doc"
-    if mime == "application/zip":
+    if mime in {"application/zip", "application/x-zip-compressed"}:
         return ".zip"
+    if mime in {"application/x-rar-compressed", "application/vnd.rar", "application/x-rar"}:
+        return ".rar"
+    if mime == "application/x-7z-compressed":
+        return ".7z"
+    if mime in {"application/gzip", "application/x-gzip"}:
+        return ".gz"
+    if mime == "application/x-tar":
+        return ".tar"
+    if mime == "application/x-bzip2":
+        return ".bz2"
+    if mime == "application/x-xz":
+        return ".xz"
+    if mime in {"application/zstd", "application/x-zstd"}:
+        return ".zst"
     if mime.startswith("text/"):
         return ".txt"
     return ".bin"
 
 
+# Compound archive extensions (check before single suffix).
+ARCHIVE_COMPOUND_EXTENSIONS = (
+    ".tar.gz",
+    ".tgz",
+    ".tar.bz2",
+    ".tbz2",
+    ".tbz",
+    ".tar.xz",
+    ".txz",
+    ".tar.zst",
+    ".tar.lz",
+    ".tar.lzma",
+    ".tar.7z",
+)
+
 # Extensions for course materials (PDF, Office, archives, notes).
+ARCHIVE_EXTENSIONS = {
+    ".zip",
+    ".zipx",
+    ".rar",
+    ".7z",
+    ".tar",
+    ".gz",
+    ".bz2",
+    ".xz",
+    ".zst",
+    ".lz",
+    ".lzma",
+    ".cab",
+    ".iso",
+    ".img",
+    ".arj",
+    ".ace",
+    ".apk",
+    ".jar",
+    ".war",
+    ".deb",
+    ".rpm",
+    ".msi",
+    ".dmg",
+    ".pkg",
+}
+
 DOCUMENT_EXTENSIONS = {
     ".pdf",
     ".doc",
@@ -137,9 +194,6 @@ DOCUMENT_EXTENSIONS = {
     ".txt",
     ".csv",
     ".md",
-    ".zip",
-    ".rar",
-    ".7z",
     ".epub",
     ".json",
     ".xml",
@@ -149,7 +203,7 @@ DOCUMENT_EXTENSIONS = {
     ".odt",
     ".ods",
     ".odp",
-}
+} | ARCHIVE_EXTENSIONS
 
 DOCUMENT_MIME_PREFIXES = (
     "application/pdf",
@@ -158,16 +212,36 @@ DOCUMENT_MIME_PREFIXES = (
     "application/zip",
     "application/x-zip",
     "application/x-rar",
+    "application/vnd.rar",
     "application/x-7z",
+    "application/gzip",
+    "application/x-gzip",
+    "application/x-tar",
+    "application/x-bzip",
+    "application/x-xz",
+    "application/zstd",
+    "application/x-compress",
+    "application/x-lzip",
+    "application/java-archive",
     "application/json",
     "application/rtf",
     "text/",
 )
 
+ALL_ALLOWED_EXTENSIONS = DOCUMENT_EXTENSIONS | set(ARCHIVE_COMPOUND_EXTENSIONS)
+
 
 def _document_filename(message: Any) -> str:
     file_obj = getattr(message, "file", None)
     return (getattr(file_obj, "name", None) or "").lower()
+
+
+def _extension_from_filename(filename: str) -> str:
+    lower = filename.lower()
+    for ext in ARCHIVE_COMPOUND_EXTENSIONS:
+        if lower.endswith(ext):
+            return ext
+    return Path(filename).suffix.lower()
 
 
 def _is_sticker_or_animation_only(message: Any, mime: str) -> bool:
@@ -200,11 +274,11 @@ def is_supported_media(message: Any) -> bool:
     if any(mime.startswith(prefix) for prefix in DOCUMENT_MIME_PREFIXES):
         return True
     filename = _document_filename(message)
-    ext = Path(filename).suffix
-    if ext in DOCUMENT_EXTENSIONS:
+    ext = _extension_from_filename(filename)
+    if ext in ALL_ALLOWED_EXTENSIONS:
         return True
     # Generic binary uploads often use octet-stream but keep the real extension in the filename.
-    if mime == "application/octet-stream" and ext in DOCUMENT_EXTENSIONS:
+    if mime in {"application/octet-stream", "binary/octet-stream", ""} and ext in ALL_ALLOWED_EXTENSIONS:
         return True
     return False
 
